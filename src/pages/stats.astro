@@ -19,8 +19,11 @@ const rest = activeRepos
 
 const topRepos = [...pinned, ...rest].slice(0, 6);
 
-const showcasedPrivateCount = githubStats.repos.filter((repo) => repo.isPrivate).length;
+const showcasedPrivateCount = githubStats.repos.filter(
+  (repo) => repo.isPrivate && !repo.isFork,
+).length;
 const anonymousPrivateCount = githubStats.profile.privateRepoCount - showcasedPrivateCount;
+const forkCount = githubStats.profile.forkRepoCount;
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -56,7 +59,15 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
     <section class="stack" aria-labelledby="languages-heading">
       <h2 id="languages-heading" class="section-title">Languages</h2>
       <p>
-        Bytes of code across {githubStats.profile.publicRepos} public, non-fork repositories
+        Bytes of code across {githubStats.profile.publicRepos} public repositories
+        {
+          forkCount > 0 ? (
+            <>
+              {" "}
+              and {forkCount === 1 ? "one fork I maintain" : `${forkCount} forks I maintain`}
+            </>
+          ) : null
+        }
         {
           anonymousPrivateCount > 0 ? (
             <>
@@ -66,6 +77,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
           ) : (
             "."
           )
+        }
+        {
+          forkCount > 0 ? (
+            <> Fork totals count the whole codebase, upstream's code included, not just my commits.</>
+          ) : null
         }
       </p>
       <LanguageBar />
@@ -86,12 +102,24 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
               <div class="project-list__heading">
                 <a href={repo.url} target="_blank" rel="noreferrer">{repo.name}</a>
                 {repo.isPrivate ? <span class="meta-chip">private</span> : null}
+                {repo.isFork ? <span class="meta-chip">fork</span> : null}
                 {repo.language ? <span class="meta-chip">{repo.language}</span> : null}
                 {repo.stars > 0 ? <span class="meta-chip">★ {repo.stars}</span> : null}
               </div>
               {repo.description ? <p>{repo.description}</p> : null}
               <p class="meta-line">
                 <span>pushed {dateFormatter.format(new Date(repo.pushedAt))}</span>
+                {repo.upstream ? (
+                  <>
+                    <span> · </span>
+                    <span>
+                      forked from{" "}
+                      <a href={repo.upstream.url} target="_blank" rel="noreferrer">
+                        {repo.upstream.nameWithOwner}
+                      </a>
+                    </span>
+                  </>
+                ) : null}
               </p>
             </li>
           ))

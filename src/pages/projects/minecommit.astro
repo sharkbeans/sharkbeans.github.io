@@ -1,0 +1,21 @@
+---
+import { getEntry, render } from "astro:content";
+import { projects } from "../../data/projects";
+import ProjectLayout from "../../layouts/ProjectLayout.astro";
+
+const project = projects.find((entry) => entry.slug === "minecommit");
+
+if (!project) {
+  throw new Error("Missing project data for minecommit");
+}
+
+const writeup = await getEntry("pages", "minecommit");
+if (!writeup) {
+  throw new Error("Missing src/content/pages/minecommit.md");
+}
+const { Content } = await render(writeup);
+---
+
+<ProjectLayout project={project}>
+  <Content />
+</ProjectLayout>

@@ -388,6 +388,7 @@ Current case-study pages:
 
 - [src/pages/projects/objekt-tools.astro](src/pages/projects/objekt-tools.astro)
 - [src/pages/projects/mybeli.astro](src/pages/projects/mybeli.astro)
+- [src/pages/projects/minecommit.astro](src/pages/projects/minecommit.astro)
 
 ## Adding blog posts
 
@@ -504,6 +505,29 @@ Secrets; it's just repo names, not sensitive) named `GH_STATS_SHOWCASE_REPOS` wi
 comma-separated `owner/name` list, e.g. `sharkbeans/my-private-elixir-app`. Only repos listed there
 get their name, description, URL, and star count written out and shown (with a "private" badge) in
 Top Repositories; every other private repo stays folded in anonymously as before.
+
+### Folding in maintained forks
+
+Every query above filters out forks (`isFork: false`), which is right for the forks you clone
+just to read someone else's code and wrong for the ones you actually maintain and release —
+those should count in the language mix and commit clock and show up in Top Repositories, flagged
+as a fork with a link back to upstream.
+
+The list defaults to `sharkbeans/minecommit`, hardcoded as `DEFAULT_FORK_REPOS` in
+[scripts/fetch-github-stats.mjs](scripts/fetch-github-stats.mjs) — deliberately *not* wired to a
+repository variable the way `GH_STATS_SHOWCASE_REPOS` is. GitHub Actions resolves an unset
+`vars.*` reference to an empty string rather than omitting the env var, so wiring it the same way
+would mean `GH_STATS_FORK_REPOS` is always "set" (to `""`) in CI, silently overriding the
+in-script default with an empty list on every run where nobody has explicitly configured a repo
+variable. Leaving it out of the workflow keeps the env var genuinely unset in CI, so the default
+actually applies.
+
+To change which forks are folded in, edit `DEFAULT_FORK_REPOS` directly, or set
+`GH_STATS_FORK_REPOS` (comma-separated `owner/name`) when running the script locally — it
+overrides the default, and an explicit empty string disables fork folding entirely. Each listed
+fork is fetched with its own query (no token beyond `GH_STATS_TOKEN` needed for a public fork),
+and the commit clock still only counts commits I authored, so a fork's contribution to the clock
+reflects my own commits, not upstream's.
 
 ## Content rules already followed
 

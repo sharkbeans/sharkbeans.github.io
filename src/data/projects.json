@@ -43,6 +43,22 @@
     ]
   },
   {
+    "slug": "minecommit",
+    "title": "MineCommit",
+    "description": "A fork of <a href=\"https://github.com/HairlessVillager/minecommit\" target=\"_blank\" rel=\"noreferrer\">MineCommit</a>, a Rust tool that turns a Minecraft save into something Git can diff and compress properly, built out into a GUI app non-developers can actually use to sync a world across machines.",
+    "sourceVisibility": "public",
+    "status": "Fork / active",
+    "repositoryUrl": "https://github.com/sharkbeans/minecommit",
+    "technologies": [
+      "Rust",
+      "Tauri",
+      "React",
+      "TypeScript",
+      "Git"
+    ],
+    "featured": false
+  },
+  {
     "slug": "objekt-tcg",
     "title": "objekt-tcg",
     "description": "An abandoned side experiment: TCG-style pack opening for Cosmo objekt collectors, mostly built as an excuse to play with real-time 3D (.glb model) rendering in the browser.",

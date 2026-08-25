@@ -19,6 +19,10 @@ export type GithubRepo = {
   languageColor: string | null;
   isArchived: boolean;
   isPrivate: boolean;
+  /** A fork listed in the fetch script's FORK_REPOS — one I ship from, not one I cloned to read. */
+  isFork: boolean;
+  /** Where a fork came from, so the page can credit it. Null for everything else. */
+  upstream: { nameWithOwner: string; url: string } | null;
   pushedAt: string;
 };
 
@@ -38,6 +42,8 @@ export type GithubStats = {
     followers: number;
     publicRepos: number;
     privateRepoCount: number;
+    /** Maintained forks folded in on top of publicRepos, which counts non-forks only. */
+    forkRepoCount: number;
   };
   contributions: {
     total: number;

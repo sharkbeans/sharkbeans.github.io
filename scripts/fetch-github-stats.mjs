@@ -15,6 +15,11 @@
  * ("owner/name,owner/name") to explicitly opt specific private repos into
  * being named and linked in the Top Repositories list too.
  *
+ * Forks are skipped by every query here, so a fork you actually ship from is
+ * invisible by default. Set GH_STATS_FORK_REPOS ("owner/name,owner/name") to
+ * fold specific forks back in; it defaults to the ones listed in
+ * DEFAULT_FORK_REPOS below.
+ *
  * Run: GITHUB_TOKEN=<token> node scripts/fetch-github-stats.mjs
  * Output: src/data/generated/github.json
  *
@@ -54,12 +59,31 @@ const PRIVATE_TOKEN = process.env.GH_STATS_PRIVATE_TOKEN;
  * it search-indexable even though the link itself 404s for non-collaborators,
  * so naming one is a deliberate per-repo choice, not automatic.
  */
-const SHOWCASE_REPOS = new Set(
-  (process.env.GH_STATS_SHOWCASE_REPOS ?? "")
+const SHOWCASE_REPOS = new Set(parseRepoList(process.env.GH_STATS_SHOWCASE_REPOS));
+
+/**
+ * Forks I actually ship from, as "owner/name". Every query above filters
+ * forks out (isFork: false), which is right for the forks you clone to read
+ * someone else's code and wrong for the ones you maintain and release — so
+ * these are named explicitly rather than swept in wholesale. Each one is
+ * folded into the language mix and commit clock (the clock only ever counts
+ * my own commits, since it filters history by author) and listed in Top
+ * Repositories flagged as a fork, with a link back to the upstream repo.
+ *
+ * The default lives here rather than in the workflow so it survives an unset
+ * repo variable; GH_STATS_FORK_REPOS overrides it, and an explicit empty
+ * value turns fork folding off entirely.
+ */
+const DEFAULT_FORK_REPOS = "sharkbeans/minecommit";
+const FORK_REPOS = parseRepoList(process.env.GH_STATS_FORK_REPOS ?? DEFAULT_FORK_REPOS);
+
+/** "owner/a, owner/b" -> ["owner/a", "owner/b"]; blank entries dropped. */
+function parseRepoList(value) {
+  return (value ?? "")
     .split(",")
     .map((entry) => entry.trim())
-    .filter(Boolean),
-);
+    .filter(Boolean);
+}
 
 /** Repos scanned for commit timestamps, most recently pushed first. */
 const CLOCK_REPO_LIMIT = 30;
@@ -185,6 +209,35 @@ const PRIVATE_REPOS_QUERY = `
   }
 `;
 
+/**
+ * One named fork at a time: `repositories(isFork: true)` would sweep in every
+ * throwaway fork on the account, and the point is that only the maintained
+ * ones count. `parent` is what lets the page credit upstream.
+ */
+const FORK_REPO_QUERY = `
+  query ($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      name
+      nameWithOwner
+      url
+      description
+      stargazerCount
+      forkCount
+      isArchived
+      isPrivate
+      pushedAt
+      parent { nameWithOwner url }
+      primaryLanguage { name color }
+      languages(first: 12, orderBy: { field: SIZE, direction: DESC }) {
+        edges {
+          size
+          node { name color }
+        }
+      }
+    }
+  }
+`;
+
 const HISTORY_QUERY = `
   query ($owner: String!, $name: String!, $authorId: ID!, $since: GitTimestamp!, $limit: Int!) {
     repository(owner: $owner, name: $name) {
@@ -242,7 +295,7 @@ function languageEntriesFromRepo(repo) {
   }));
 }
 
-function toRepoEntry(repo, isPrivate) {
+function toRepoEntry(repo, { isPrivate = false, isFork = false } = {}) {
   return {
     name: repo.name,
     url: repo.url,
@@ -253,6 +306,8 @@ function toRepoEntry(repo, isPrivate) {
     languageColor: repo.primaryLanguage?.color ?? null,
     isArchived: repo.isArchived,
     isPrivate,
+    isFork,
+    upstream: repo.parent ? { nameWithOwner: repo.parent.nameWithOwner, url: repo.parent.url } : null,
     pushedAt: repo.pushedAt,
   };
 }
@@ -272,6 +327,33 @@ async function fetchPrivateRepos() {
     console.warn(`[github-stats] Private repo discovery skipped: ${error.message}`);
     return [];
   }
+}
+
+/**
+ * The named forks from FORK_REPOS, fetched one by one. A fork that is gone,
+ * renamed, or private to a token that can't see it is skipped with a warning
+ * rather than failing the run — same degradation rule as everything else here.
+ */
+async function fetchForkRepos() {
+  const found = [];
+
+  for (const nameWithOwner of FORK_REPOS) {
+    const [owner, name] = nameWithOwner.split("/");
+    if (!owner || !name) {
+      console.warn(`[github-stats] Fork skipped: "${nameWithOwner}" is not owner/name`);
+      continue;
+    }
+
+    try {
+      const data = await graphql(FORK_REPO_QUERY, { owner, name });
+      if (data.repository) found.push(data.repository);
+      else console.warn(`[github-stats] Fork skipped: ${nameWithOwner} not found`);
+    } catch (error) {
+      console.warn(`[github-stats] Fork skipped (${nameWithOwner}): ${error.message}`);
+    }
+  }
+
+  return found;
 }
 
 /** sources: [{ repos: [{ nameWithOwner }], token }, ...] — scanned in order, each capped independently. */
@@ -325,10 +407,11 @@ async function main() {
   const contributions = user.contributionsCollection;
   const repos = (user.repositories.nodes ?? []).filter(Boolean);
   const privateRepos = await fetchPrivateRepos();
+  const forkRepos = await fetchForkRepos();
 
   let commitClock = null;
   try {
-    const sources = [{ repos, token: TOKEN }];
+    const sources = [{ repos: [...repos, ...forkRepos], token: TOKEN }];
     if (privateRepos.length > 0) sources.push({ repos: privateRepos, token: PRIVATE_TOKEN });
     commitClock = await fetchCommitClock(sources, user.id);
   } catch (error) {
@@ -347,6 +430,8 @@ async function main() {
       publicRepos: user.repositories.totalCount,
       /** Folded into the language mix / commit clock either way; named in `repos` only if listed in GH_STATS_SHOWCASE_REPOS. */
       privateRepoCount: privateRepos.length,
+      /** Maintained forks folded in on top of publicRepos, which counts non-forks only. */
+      forkRepoCount: forkRepos.length,
     },
     contributions: {
       total: contributions.contributionCalendar.totalContributions,
@@ -365,19 +450,21 @@ async function main() {
     languages: aggregateLanguages([
       ...repos.flatMap(languageEntriesFromRepo),
       ...privateRepos.flatMap(languageEntriesFromRepo),
+      ...forkRepos.flatMap(languageEntriesFromRepo),
     ]),
     repos: [
-      ...repos.map((repo) => toRepoEntry(repo, false)),
+      ...repos.map((repo) => toRepoEntry(repo)),
       ...privateRepos
         .filter((repo) => SHOWCASE_REPOS.has(repo.nameWithOwner))
-        .map((repo) => toRepoEntry(repo, true)),
+        .map((repo) => toRepoEntry(repo, { isPrivate: true })),
+      ...forkRepos.map((repo) => toRepoEntry(repo, { isPrivate: repo.isPrivate, isFork: true })),
     ],
     commitClock,
   };
 
   writeFileSync(outFile, `${JSON.stringify(payload, null, 2)}\n`);
 
-  const showcasedCount = payload.repos.length - repos.length;
+  const showcasedCount = payload.repos.length - repos.length - forkRepos.length;
   console.log(
     `[github-stats] ${payload.contributions.total} contributions, ` +
       `${repos.length} public repos` +
@@ -385,7 +472,8 @@ async function main() {
         privateRepos.length > 0
           ? ` + ${privateRepos.length} private (folded, ${showcasedCount} shown by name)`
           : ""
-      }, ` +
+      }` +
+      `${forkRepos.length > 0 ? ` + ${forkRepos.length} fork(s)` : ""}, ` +
       `${commitClock ? `${commitClock.sampled} commits sampled` : "no commit clock"}`,
   );
 }

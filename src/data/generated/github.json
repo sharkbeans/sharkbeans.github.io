@@ -6,7 +6,8 @@
     "createdAt": "2023-08-28T03:00:06Z",
     "followers": 0,
     "publicRepos": 7,
-    "privateRepoCount": 12
+    "privateRepoCount": 12,
+    "forkRepoCount": 1
   },
   "contributions": {
     "total": 923,
@@ -1710,17 +1711,17 @@
     {
       "name": "TypeScript",
       "color": "#3178c6",
-      "size": 2310172
+      "size": 2641309
     },
     {
       "name": "JavaScript",
       "color": "#f1e05a",
-      "size": 1936071
+      "size": 1943142
     },
     {
       "name": "HTML",
       "color": "#e34c26",
-      "size": 728261
+      "size": 728637
     },
     {
       "name": "Elixir",
@@ -1735,7 +1736,12 @@
     {
       "name": "CSS",
       "color": "#663399",
-      "size": 522824
+      "size": 528149
+    },
+    {
+      "name": "Rust",
+      "color": "#dea584",
+      "size": 397052
     },
     {
       "name": "Astro",
@@ -1750,7 +1756,7 @@
     {
       "name": "Shell",
       "color": "#89e051",
-      "size": 3333
+      "size": 4607
     },
     {
       "name": "MDX",
@@ -1784,6 +1790,8 @@
       "languageColor": "#3178c6",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-08-06T02:38:51Z"
     },
     {
@@ -1796,6 +1804,8 @@
       "languageColor": "#3178c6",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-08-03T08:06:41Z"
     },
     {
@@ -1808,6 +1818,8 @@
       "languageColor": "#f1e05a",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-07-29T00:57:40Z"
     },
     {
@@ -1820,6 +1832,8 @@
       "languageColor": "#f1e05a",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-05-02T06:12:59Z"
     },
     {
@@ -1832,6 +1846,8 @@
       "languageColor": "#f1e05a",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-04-02T05:53:07Z"
     },
     {
@@ -1844,6 +1860,8 @@
       "languageColor": "#f1e05a",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-02-28T16:21:20Z"
     },
     {
@@ -1856,6 +1874,8 @@
       "languageColor": "#f1e05a",
       "isArchived": false,
       "isPrivate": false,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-02-02T16:24:13Z"
     },
     {
@@ -1868,6 +1888,8 @@
       "languageColor": "#6e4a7e",
       "isArchived": false,
       "isPrivate": true,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-08-05T08:11:57Z"
     },
     {
@@ -1880,7 +1902,26 @@
       "languageColor": "#3178c6",
       "isArchived": false,
       "isPrivate": true,
+      "isFork": false,
+      "upstream": null,
       "pushedAt": "2026-07-02T07:18:40Z"
+    },
+    {
+      "name": "minecommit",
+      "url": "https://github.com/sharkbeans/minecommit",
+      "description": "Commit your Minecraft world to Git",
+      "stars": 0,
+      "forks": 0,
+      "language": "Rust",
+      "languageColor": "#dea584",
+      "isArchived": false,
+      "isPrivate": false,
+      "isFork": true,
+      "upstream": {
+        "nameWithOwner": "HairlessVillager/minecommit",
+        "url": "https://github.com/HairlessVillager/minecommit"
+      },
+      "pushedAt": "2026-08-25T00:38:51Z"
     }
   ],
   "commitClock": {
