@@ -45,7 +45,7 @@
   {
     "slug": "minecommit",
     "title": "MineCommit",
-    "description": "A fork of <a href=\"https://github.com/HairlessVillager/minecommit\" target=\"_blank\" rel=\"noreferrer\">MineCommit</a>, a Rust tool that turns a Minecraft save into something Git can diff and compress properly, built out into a GUI app non-developers can actually use to sync a world across machines.",
+    "description": "Inspired by <a href=\"https://youtu.be/ZdM-iNpv3nU\">MathRayyan's Git for Minecraft</a>, I always wanted to sync my worlds and potentially have a git-like version control/contribution features without hosting anything myself.\nA fork of <a href=\"https://github.com/HairlessVillager/minecommit\" target=\"_blank\" rel=\"noreferrer\">MineCommit</a>, a Rust tool that turns a Minecraft save into something Git can diff and compress properly, built out into a GUI app non-developers can actually use to sync a world across machines.",
     "sourceVisibility": "public",
     "status": "Fork / active",
     "repositoryUrl": "https://github.com/sharkbeans/minecommit",
